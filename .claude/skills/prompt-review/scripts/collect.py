@@ -540,6 +540,126 @@ def collect_antigravity(cutoff_ms: int | None) -> dict:
     return result
 
 
+def collect_codex(cutoff_ms: int | None, project_filter: str | None) -> dict:
+    """OpenAI Codex CLI の rollout JSONL からユーザープロンプトを収集"""
+    result = {"tool": "OpenAI Codex", "status": "未検出", "messages": [], "period": ""}
+
+    codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+    sessions_dir = codex_home / "sessions"
+    if not sessions_dir.exists():
+        return result
+
+    messages = []
+
+    # sessions/YYYY/MM/DD/rollout-*.jsonl を走査
+    rollout_files = sorted(
+        sessions_dir.rglob("rollout-*.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )[:50]
+
+    for rollout_path in rollout_files:
+        # カットオフフィルタ: ファイル更新日時で粗くフィルタ
+        if cutoff_ms:
+            file_mtime_ms = int(rollout_path.stat().st_mtime * 1000)
+            if file_mtime_ms < cutoff_ms:
+                continue
+
+        try:
+            cwd = ""
+            session_messages = []
+            msg_count = 0
+
+            with open(rollout_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+
+                    timestamp_str = entry.get("timestamp", "")
+
+                    # SessionMeta からプロジェクト情報を取得
+                    session_meta = entry.get("SessionMeta") or entry.get("session_meta")
+                    if session_meta:
+                        cwd = session_meta.get("cwd", "") or session_meta.get("working_directory", "")
+                        continue
+
+                    # ResponseItem からユーザーメッセージを抽出
+                    response_item = entry.get("ResponseItem") or entry.get("response_item")
+                    if not response_item:
+                        continue
+
+                    item_type = response_item.get("type", "")
+                    role = response_item.get("role", "")
+                    if item_type != "message" or role != "user":
+                        continue
+
+                    # コンテンツからテキストを抽出
+                    content = response_item.get("content", [])
+                    texts = []
+                    if isinstance(content, list):
+                        for part in content:
+                            if isinstance(part, dict):
+                                part_type = part.get("type", "")
+                                if part_type in ("input_text", "text"):
+                                    text = part.get("text", "").strip()
+                                    if text:
+                                        texts.append(text)
+                    elif isinstance(content, str):
+                        texts.append(content.strip())
+
+                    text = sanitize_text(" ".join(texts).strip())
+                    if not text:
+                        continue
+
+                    # タイムスタンプ処理
+                    ts_ms = iso_to_ms(timestamp_str) if timestamp_str else None
+                    if cutoff_ms and ts_ms and ts_ms < cutoff_ms:
+                        continue
+
+                    ts_display = ts_to_iso(ts_ms) if ts_ms else "unknown"
+
+                    session_messages.append({
+                        "text": text[:500],
+                        "timestamp": ts_display,
+                        "timestamp_ms": ts_ms or 0,
+                        "_cwd_placeholder": True,  # cwdは後で設定
+                    })
+                    msg_count += 1
+                    if msg_count >= 100:
+                        break
+
+            # プロジェクト名を設定
+            project_name = Path(cwd).name if cwd else "unknown"
+
+            # プロジェクトフィルタ
+            if project_filter:
+                filter_lower = project_filter.lower()
+                if filter_lower not in project_name.lower() and (not cwd or filter_lower not in cwd.lower()):
+                    continue
+
+            for msg in session_messages:
+                del msg["_cwd_placeholder"]
+                msg["project"] = project_name
+                messages.append(msg)
+
+        except (OSError, UnicodeDecodeError):
+            continue
+
+    if messages:
+        result["status"] = "検出"
+        result["messages"] = messages
+        timestamps = [m["timestamp"] for m in messages if m["timestamp"] != "unknown"]
+        if timestamps:
+            result["period"] = f"{min(timestamps)} 〜 {max(timestamps)}"
+
+    return result
+
+
 def collect_opencode(cutoff_ms: int | None, project_filter: str | None) -> dict:
     """OpenCode の SQLite DB からユーザープロンプトを収集"""
     result = {"tool": "OpenCode", "status": "未検出", "messages": [], "period": ""}
@@ -707,6 +827,7 @@ def main():
         collect_roo_code(cutoff_ms),
         collect_windsurf(cutoff_ms),
         collect_antigravity(cutoff_ms),
+        collect_codex(cutoff_ms, args.project),
         collect_opencode(cutoff_ms, args.project),
     ]
 

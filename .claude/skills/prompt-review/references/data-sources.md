@@ -207,7 +207,57 @@ Cline と同じ手順。
 
 ---
 
-## 7. OpenCode
+## 7. OpenAI Codex（CLI）
+
+### 保存場所
+| OS | パス |
+|----|------|
+| Windows | `%USERPROFILE%\.codex\sessions\` |
+| macOS | `~/.codex/sessions/` |
+| Linux | `~/.codex/sessions/` |
+
+環境変数 `CODEX_HOME` が設定されている場合は、`$CODEX_HOME/sessions/` を使用する。
+
+### ファイル構造
+```
+~/.codex/
+├── config.toml                                    # 設定ファイル
+├── state-v5.db                                    # スレッドメタデータ（SQLite）
+├── session_index.jsonl                            # セッションインデックス
+└── sessions/
+    └── YYYY/MM/DD/
+        └── rollout-YYYY-MM-DDThh-mm-ss-<id>.jsonl # セッション別会話ログ
+```
+
+### rollout JSONL の形式
+各行がJSONオブジェクト。行の種別は以下のキーで判別する:
+
+**SessionMeta（セッション開始時のメタ情報）**
+```json
+{"timestamp": "2025-06-15T10:30:00.123Z", "SessionMeta": {"cwd": "/path/to/project", "model_provider": "openai", ...}}
+```
+
+**ResponseItem（会話アイテム）**
+```json
+{"timestamp": "2025-06-15T10:30:01.000Z", "ResponseItem": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "ユーザーの入力"}]}}
+```
+
+### 抽出方法
+1. `~/.codex/sessions/` 配下の `rollout-*.jsonl` を再帰的に走査（最新50件）
+2. 各ファイルから `SessionMeta` 行の `cwd` でプロジェクト情報を取得
+3. `ResponseItem` で `type: "message"`, `role: "user"` のメッセージを抽出
+4. `content` 配列から `type: "input_text"` または `type: "text"` のパートを連結
+5. 1ファイルあたりユーザーメッセージ100件上限
+
+### 注意事項
+- セッションはグローバル保存（プロジェクト別ディレクトリではない）
+- プロジェクト情報は `SessionMeta` の `cwd` フィールドから取得
+- `state-v5.db` にもスレッドメタデータがあるが、会話内容は rollout JSONL に保存される
+- Codex は Rust 製のため、JSONL のキー名が CamelCase（`SessionMeta`, `ResponseItem`）
+
+---
+
+## 8. OpenCode
 
 ### 保存場所
 | OS | パス |
@@ -253,6 +303,7 @@ SQLite データベース（`opencode.db` または `opencode-<channel>.db`）
 - Claude Code: `timestamp` フィールド（Unix epoch ミリ秒）で比較
 - Cline/Roo Code: `task_metadata.json` のタイムスタンプで比較
 - GitHub Copilot Chat: セッションデータ内のタイムスタンプで比較
+- OpenAI Codex: `timestamp` フィールド（ISO 8601）で比較
 - Windsurf/Antigravity: ファイルの更新日時で比較（正確なタイムスタンプが取れない場合）
 
 ### 存在チェックの順序
