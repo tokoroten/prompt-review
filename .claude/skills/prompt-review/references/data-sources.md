@@ -212,7 +212,7 @@ Cline と同じ手順。
 ### 保存場所
 | OS | パス |
 |----|------|
-| Windows | `%USERPROFILE%\\.local\\share\\opencode\\` |
+| Windows | `%USERPROFILE%\.local\share\opencode\` |
 | macOS | `~/.local/share/opencode/` |
 | Linux | `~/.local/share/opencode/` |
 
