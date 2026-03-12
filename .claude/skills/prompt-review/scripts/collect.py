@@ -208,7 +208,7 @@ def collect_claude_code(cutoff_ms: int | None, project_filter: str | None) -> di
                 [f for f in project_dir.glob("*.jsonl") if f.is_file()],
                 key=lambda p: p.stat().st_mtime,
                 reverse=True,
-            )[:5]
+            )[:50]
 
             for session_file in session_files:
                 session_id = session_file.stem
