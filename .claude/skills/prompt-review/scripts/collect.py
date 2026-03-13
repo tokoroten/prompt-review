@@ -580,16 +580,24 @@ def collect_codex(cutoff_ms: int | None, project_filter: str | None) -> dict:
                     except json.JSONDecodeError:
                         continue
 
-                    timestamp_str = entry.get("timestamp", "")
+                    # entry を正規化: フォーマット互換性確保
+                    entry_type = entry.get("type", "")
+                    payload = entry.get("payload")
+                    if entry_type and isinstance(payload, dict):
+                        normalized = {entry_type: payload, "timestamp": entry.get("timestamp", "")}
+                    else:
+                        normalized = entry
+
+                    timestamp_str = normalized.get("timestamp", "")
 
                     # SessionMeta からプロジェクト情報を取得
-                    session_meta = entry.get("SessionMeta") or entry.get("session_meta")
+                    session_meta = normalized.get("SessionMeta") or normalized.get("session_meta")
                     if session_meta:
                         cwd = session_meta.get("cwd", "") or session_meta.get("working_directory", "")
                         continue
 
                     # ResponseItem からユーザーメッセージを抽出
-                    response_item = entry.get("ResponseItem") or entry.get("response_item")
+                    response_item = normalized.get("ResponseItem") or normalized.get("response_item")
                     if not response_item:
                         continue
 

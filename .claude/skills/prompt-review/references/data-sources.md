@@ -230,30 +230,32 @@ Cline と同じ手順。
 ```
 
 ### rollout JSONL の形式
-各行がJSONオブジェクト。行の種別は以下のキーで判別する:
+各行がJSONオブジェクト。バージョンによって2種類のフォーマットが存在する:
 
-**SessionMeta（セッション開始時のメタ情報）**
+**旧フォーマット（〜v0.114頃）**: 行の種別はトップレベルのキー名で判別
 ```json
 {"timestamp": "2025-06-15T10:30:00.123Z", "SessionMeta": {"cwd": "/path/to/project", "model_provider": "openai", ...}}
+{"timestamp": "2025-06-15T10:30:01.000Z", "ResponseItem": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "ユーザーの入力"}]}}
 ```
 
-**ResponseItem（会話アイテム）**
+**新フォーマット（v0.115〜）**: `type` フィールドで種別を判別し、データは `payload` に格納
 ```json
-{"timestamp": "2025-06-15T10:30:01.000Z", "ResponseItem": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "ユーザーの入力"}]}}
+{"timestamp": "2025-06-15T10:30:00.123Z", "type": "session_meta", "payload": {"cwd": "/path/to/project", "model_provider": "openai", ...}}
+{"timestamp": "2025-06-15T10:30:01.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "ユーザーの入力"}]}}
 ```
 
 ### 抽出方法
 1. `~/.codex/sessions/` 配下の `rollout-*.jsonl` を再帰的に走査（最新50件）
-2. 各ファイルから `SessionMeta` 行の `cwd` でプロジェクト情報を取得
-3. `ResponseItem` で `type: "message"`, `role: "user"` のメッセージを抽出
+2. 各ファイルから `SessionMeta` / `session_meta` 行の `cwd` でプロジェクト情報を取得
+3. `ResponseItem` / `response_item` で `type: "message"`, `role: "user"` のメッセージを抽出
 4. `content` 配列から `type: "input_text"` または `type: "text"` のパートを連結
 5. 1ファイルあたりユーザーメッセージ100件上限
 
 ### 注意事項
 - セッションはグローバル保存（プロジェクト別ディレクトリではない）
-- プロジェクト情報は `SessionMeta` の `cwd` フィールドから取得
+- プロジェクト情報は `SessionMeta` / `session_meta` の `cwd` フィールドから取得
 - `state-v5.db` にもスレッドメタデータがあるが、会話内容は rollout JSONL に保存される
-- Codex は Rust 製のため、JSONL のキー名が CamelCase（`SessionMeta`, `ResponseItem`）
+- 旧フォーマットは CamelCase キー（`SessionMeta`, `ResponseItem`）、新フォーマットは snake_case の `type` フィールド + `payload` 構造
 
 ---
 
