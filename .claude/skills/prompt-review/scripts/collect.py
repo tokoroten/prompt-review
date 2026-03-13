@@ -302,38 +302,37 @@ def collect_copilot_chat(cutoff_ms: int | None, project_filter: str | None) -> d
     all_prompts = []
 
     for vscdb_path in workspace_storage.glob("*/state.vscdb"):
+        # 接続前にカットオフチェックして I/O を削減
+        file_mtime_ms = int(vscdb_path.stat().st_mtime * 1000)
+        if cutoff_ms and file_mtime_ms < cutoff_ms:
+            continue
+
         try:
-            conn = sqlite3.connect(str(vscdb_path))
-            cursor = conn.cursor()
+            with sqlite3.connect(str(vscdb_path)) as conn:
+                cursor = conn.cursor()
 
-            # memento/interactive-session にプロンプト履歴がある
-            cursor.execute(
-                "SELECT value FROM ItemTable WHERE key = 'memento/interactive-session'"
-            )
-            row = cursor.fetchone()
-            if row and row[0]:
-                try:
-                    data = json.loads(row[0])
-                    history = data.get("history", {})
-                    for mode_key, entries in history.items():
-                        if isinstance(entries, list):
-                            for entry in entries:
-                                text = entry.get("text", "").strip()
-                                if text:
-                                    # Copilot Chat にはタイムスタンプがないため、vscdbの更新日時を代用
-                                    file_mtime_ms = int(vscdb_path.stat().st_mtime * 1000)
-                                    if cutoff_ms and file_mtime_ms < cutoff_ms:
-                                        continue
-                                    all_prompts.append({
-                                        "text": text[:500],
-                                        "timestamp": ts_to_iso(file_mtime_ms),
-                                        "timestamp_ms": file_mtime_ms,
-                                        "project": vscdb_path.parent.name[:12],
-                                    })
-                except (json.JSONDecodeError, AttributeError):
-                    pass
-
-            conn.close()
+                # memento/interactive-session にプロンプト履歴がある
+                cursor.execute(
+                    "SELECT value FROM ItemTable WHERE key = 'memento/interactive-session'"
+                )
+                row = cursor.fetchone()
+                if row and row[0]:
+                    try:
+                        data = json.loads(row[0])
+                        history = data.get("history", {})
+                        for mode_key, entries in history.items():
+                            if isinstance(entries, list):
+                                for entry in entries:
+                                    text = entry.get("text", "").strip()
+                                    if text:
+                                        all_prompts.append({
+                                            "text": text[:500],
+                                            "timestamp": ts_to_iso(file_mtime_ms),
+                                            "timestamp_ms": file_mtime_ms,
+                                            "project": vscdb_path.parent.name[:12],
+                                        })
+                    except (json.JSONDecodeError, AttributeError):
+                        pass
         except sqlite3.Error:
             continue
 
