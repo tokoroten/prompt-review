@@ -591,6 +591,11 @@ def collect_codex(cutoff_ms: int | None, project_filter: str | None) -> dict:
                     # ResponseItem からユーザーメッセージを抽出
                     response_item = entry.get("ResponseItem") or entry.get("response_item")
                     if not response_item:
+                        # 別フォーマットの場合、payloadからユーザーメッセージを抽出
+                        if entry.get("type") != "response_item":
+                            continue
+                        response_item = entry.get("payload")
+                    if not response_item:
                         continue
 
                     item_type = response_item.get("type", "")
