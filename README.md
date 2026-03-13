@@ -17,6 +17,7 @@ Claude Code のスキルとして動作する、AIエージェント対話履歴
 |--------|---------|
 | Claude Code（CLI / VS Code拡張） | JSONL（history.jsonl + プロジェクト別セッション） |
 | GitHub Copilot Chat | SQLite（state.vscdb） |
+| Cursor | SQLite（state.vscdb） |
 | Cline | JSON（api_conversation_history.json） |
 | Roo Code | JSON（Clineと同一構造） |
 | Windsurf (Cascade) | テキスト（自動要約メモリ） |
