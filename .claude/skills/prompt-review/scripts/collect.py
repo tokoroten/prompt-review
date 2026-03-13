@@ -587,6 +587,10 @@ def collect_codex(cutoff_ms: int | None, project_filter: str | None) -> dict:
                     if session_meta:
                         cwd = session_meta.get("cwd", "") or session_meta.get("working_directory", "")
                         continue
+                    # 別フォーマットの場合、payloadからcwdを抽出
+                    payload = entry.get("payload")
+                    if payload and "cwd" in payload:
+                        cwd = payload.get("cwd", "")
 
                     # ResponseItem からユーザーメッセージを抽出
                     response_item = entry.get("ResponseItem") or entry.get("response_item")
