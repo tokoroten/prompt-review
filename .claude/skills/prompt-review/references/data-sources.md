@@ -245,7 +245,97 @@ Cline と同じ手順。
 
 ---
 
-## 8. OpenAI Codex（CLI）
+## 8. Gemini CLI
+
+### 保存場所
+| OS | パス |
+|----|------|
+| Windows | `%USERPROFILE%\.gemini\tmp\<project_name_or_hash>\chats\` |
+| macOS | `~/.gemini/tmp/<project_name_or_hash>/chats/` |
+| Linux | `~/.gemini/tmp/<project_name_or_hash>/chats/` |
+
+新しいバージョン（v0.29+ 相当）では `<project_name>` はプロジェクトルートディレクトリのベース名（例: `gemini-cli`）。
+古いバージョンでは 64文字の16進数ハッシュ値（逆引き不可）。両形式が混在する場合がある。
+
+### ファイル構造
+```
+~/.gemini/tmp/
+├── {project_name}/               # 新形式: 人間が読めるプロジェクト名
+│   └── chats/
+│       └── session-YYYY-MM-DDTHH-MM-{id}.json    # セッションファイル（新形式）
+└── {project_hash}/               # 旧形式: 64文字16進数ハッシュ
+    └── chats/
+        ├── session-{id}.jsonl    # 自動セッション記録（旧JSONL形式）
+        └── checkpoint-{name}.json  # /chat save による手動保存
+```
+
+### ファイル形式
+
+**JSON形式（セッションオブジェクト、新形式）** — `session-*.json` がJSONオブジェクト
+
+```json
+{
+  "sessionId": "uuid",
+  "projectHash": "sha256...",
+  "startTime": "2026-03-06T04:16:33.678Z",
+  "lastUpdated": "2026-03-06T04:16:39.320Z",
+  "messages": [
+    {
+      "id": "uuid",
+      "timestamp": "2026-03-06T04:16:33.678Z",
+      "type": "user",
+      "content": [
+        {"text": "ユーザーの入力"},
+        {"text": "\n--- Content from referenced files ---"},
+        {"text": "注入されたファイル内容"},
+        {"text": "\n--- End of content ---"}
+      ]
+    },
+    {"id": "uuid", "timestamp": "...", "type": "gemini", "content": "AIの応答テキスト"},
+    {"id": "uuid", "timestamp": "...", "type": "info", "content": "システム情報"}
+  ]
+}
+```
+
+**JSONL形式（自動セッション、旧形式）** — `session-*.jsonl` が1行1エントリ
+
+各行が以下のいずれかのJSON:
+```json
+{"type": "session_metadata", "sessionId": "...", "projectHash": "...", "startTime": "2025-06-15T10:30:00Z"}
+{"type": "user", "id": "msg1", "content": [{"text": "ユーザーの入力"}]}
+{"type": "gemini", "id": "msg2", "content": [{"text": "AIの応答"}]}
+{"type": "message_update", "id": "msg2", "tokens": {"input": 10, "output": 5}}
+```
+
+**JSON形式（手動保存チェックポイント、旧形式）** — `checkpoint-*.json` がJSON配列
+
+```json
+[
+  {"role": "user", "parts": [{"text": "ユーザーの入力"}]},
+  {"role": "model", "parts": [{"text": "AIの応答"}]}
+]
+```
+
+### 抽出方法
+1. `~/.gemini/tmp/` 配下の全プロジェクトディレクトリを走査
+2. 各ディレクトリの `chats/` 配下のファイルを更新日時降順で最新20件取得
+3. `.json` ファイルはトップレベルが `dict` かつ `messages` キーを持つ場合は新形式として処理:
+   - `type == "user"` のメッセージの `content[].text` を抽出
+   - `--- Content from referenced files ---` パート以降はシステム注入コンテンツとして除外
+   - メッセージ単位の `timestamp`（ISO 8601）でカットオフフィルタを適用
+4. `.json` ファイルがリストの場合は旧形式: `role == "user"` の `parts[].text` を抽出
+5. `.jsonl` ファイルは1行ずつパース: `type == "user"` の行の `content[].text` を抽出
+6. タイムスタンプが取得できない場合はファイルの更新日時を使用
+
+### 注意事項
+- 新形式のプロジェクトディレクトリ名はプロジェクト名（`--project` フィルタで部分一致）
+- 旧形式のハッシュ名ディレクトリは逆引き不可のため `--project` フィルタをスキップして全件収集
+- デフォルトの保持期間は30日（`~/.gemini/settings.json` の `sessionRetention.maxAge` で変更可能）
+- 旧JSONL形式はメッセージ単位のタイムスタンプを持たず、セッション開始時刻を全メッセージに適用
+
+---
+
+## 9. OpenAI Codex（CLI）
 
 ### 保存場所
 | OS | パス |
@@ -295,7 +385,7 @@ Cline と同じ手順。
 
 ---
 
-## 9. OpenCode
+## 10. OpenCode
 
 ### 保存場所
 | OS | パス |
