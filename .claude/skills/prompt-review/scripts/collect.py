@@ -203,7 +203,7 @@ def collect_claude_code(cutoff_ms: int | None, project_filter: str | None) -> di
                 if project_filter.lower().replace(" ", "-") not in dir_name.lower():
                     continue
 
-            # セッションJSONLファイルを走査（最新5件に制限）
+            # セッションJSONLファイルを走査（最新50件に制限）
             session_files = sorted(
                 [f for f in project_dir.glob("*.jsonl") if f.is_file()],
                 key=lambda p: p.stat().st_mtime,

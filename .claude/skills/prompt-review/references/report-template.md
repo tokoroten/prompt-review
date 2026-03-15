@@ -18,10 +18,13 @@
 |--------|-----------|-------------|------|
 | Claude Code | 検出 / 未検出 | N件 | YYYY-MM-DD HH:MM 〜 YYYY-MM-DD HH:MM |
 | GitHub Copilot Chat | 検出 / 未検出 | N件 | YYYY-MM-DD HH:MM 〜 YYYY-MM-DD HH:MM |
+| Cursor | 検出 / 未検出 | N件 | YYYY-MM-DD HH:MM 〜 YYYY-MM-DD HH:MM |
 | Cline | 検出 / 未検出 | N件 | - |
 | Roo Code | 検出 / 未検出 | N件 | - |
 | Windsurf | 検出 / 未検出 | N件 | - |
-| Antigravity | 検出 / 未検出 | N件 | - |
+| Google Antigravity | 検出 / 未検出 | N件 | - |
+| Gemini CLI | 検出 / 未検出 | N件 | YYYY-MM-DD HH:MM 〜 YYYY-MM-DD HH:MM |
+| OpenAI Codex | 検出 / 未検出 | N件 | YYYY-MM-DD HH:MM 〜 YYYY-MM-DD HH:MM |
 | OpenCode | 検出 / 未検出 | N件 | YYYY-MM-DD HH:MM 〜 YYYY-MM-DD HH:MM |
 
 <!-- データソースサマリーの記述ルール:
