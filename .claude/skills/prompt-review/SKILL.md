@@ -32,10 +32,12 @@ context: fork
 
 ### 引数からスクリプトオプションを組み立てる
 
-`$ARGUMENTS` を解析し、Bash で以下のように実行する:
+`$ARGUMENTS` を解析し、Bash で以下のように実行する。
+**実行前にタイムスタンプ付きのファイル名を生成し、スクリプト出力の保存先と Read の参照先で同じパスを使うこと。**
 
 ```bash
-python ~/.claude/skills/prompt-review/scripts/collect.py [OPTIONS] > /tmp/prompt-review-data.json
+OUTFILE="/tmp/prompt-review-data_$(date +%Y%m%d%H%M%S).json"
+python ~/.claude/skills/prompt-review/scripts/collect.py [OPTIONS] > "$OUTFILE"
 ```
 
 - 引数なし → オプションなし（デフォルト: 過去7日分）
@@ -48,7 +50,7 @@ python ~/.claude/skills/prompt-review/scripts/collect.py [OPTIONS] > /tmp/prompt
 
 ### 出力の読み取り
 
-スクリプト実行後、`/tmp/prompt-review-data.json` を Read で読み込む。
+スクリプト実行後、上記で生成した `$OUTFILE` のパスを Read で読み込む。
 
 出力JSON構造:
 ```json
@@ -88,7 +90,7 @@ python ~/.claude/skills/prompt-review/scripts/collect.py [OPTIONS] > /tmp/prompt
 
 ## ステップ2: 分析
 
-Read で `/tmp/prompt-review-data.json` を読み込んだら、以下の観点で `messages` 配列内のユーザープロンプトを分析する。各観点について**具体的なエビデンス**（実際のプロンプト断片の引用）を必ず含めること。
+Read で `$OUTFILE`（ステップ1で生成したタイムスタンプ付きファイル）を読み込んだら、以下の観点で `messages` 配列内のユーザープロンプトを分析する。各観点について**具体的なエビデンス**（実際のプロンプト断片の引用）を必ず含めること。
 
 ### 前処理: プロジェクト別サマリーの作成と短文応答の除外
 
