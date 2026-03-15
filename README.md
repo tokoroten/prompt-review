@@ -22,6 +22,7 @@ Claude Code のスキルとして動作する、AIエージェント対話履歴
 | Roo Code | JSON（Clineと同一構造） |
 | Windsurf (Cascade) | テキスト（自動要約メモリ） |
 | Google Antigravity | テキスト（ログファイル） |
+| Gemini CLI | JSON / JSONL（セッションファイル） |
 | OpenAI Codex（CLI） | JSONL（rollout セッションファイル） |
 | OpenCode | SQLite（`opencode.db` / `opencode-<channel>.db`） |
 
