@@ -808,19 +808,20 @@ def collect_gemini_cli(cutoff_ms: int | None, project_filter: str | None) -> dic
 
 
 def collect_codex(cutoff_ms: int | None, project_filter: str | None) -> dict:
-    """OpenAI Codex CLI の rollout JSONL からユーザープロンプトを収集"""
+    """OpenAI Codex の rollout JSONL からユーザープロンプトを収集"""
     result = {"tool": "OpenAI Codex", "status": "未検出", "messages": [], "period": ""}
 
     codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
     sessions_dir = codex_home / "sessions"
-    if not sessions_dir.exists():
+    archived_dir = codex_home / "archived_sessions"
+    if not sessions_dir.exists() and not archived_dir.exists():
         return result
 
     messages = []
 
-    # sessions/YYYY/MM/DD/rollout-*.jsonl を走査
+    # sessions/YYYY/MM/DD/rollout-*.jsonl と archived_sessions/rollout-*.jsonl を走査
     rollout_files = sorted(
-        sessions_dir.rglob("rollout-*.jsonl"),
+        [*sessions_dir.rglob("rollout-*.jsonl"), *archived_dir.rglob("rollout-*.jsonl")],
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )[:50]

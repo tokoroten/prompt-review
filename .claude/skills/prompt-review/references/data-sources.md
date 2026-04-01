@@ -344,7 +344,7 @@ Cline と同じ手順。
 | macOS | `~/.codex/sessions/` |
 | Linux | `~/.codex/sessions/` |
 
-環境変数 `CODEX_HOME` が設定されている場合は、`$CODEX_HOME/sessions/` を使用する。
+環境変数 `CODEX_HOME` が設定されている場合は、`$CODEX_HOME/sessions/` および `$CODEX_HOME/archived_sessions/` を使用する。
 
 ### ファイル構造
 ```
@@ -355,6 +355,8 @@ Cline と同じ手順。
 └── sessions/
     └── YYYY/MM/DD/
         └── rollout-YYYY-MM-DDThh-mm-ss-<id>.jsonl # セッション別会話ログ
+└── archived_sessions/
+    └── rollout-YYYY-MM-DDThh-mm-ss-<id>.jsonl     # アーカイブ済み会話ログ
 ```
 
 ### rollout JSONL の形式
@@ -371,7 +373,7 @@ Cline と同じ手順。
 ```
 
 ### 抽出方法
-1. `~/.codex/sessions/` 配下の `rollout-*.jsonl` を再帰的に走査（最新50件）
+1. `~/.codex/sessions/` と `~/.codex/archived_sessions/` 配下の `rollout-*.jsonl` を再帰的に走査（最新50件）
 2. 各行の `type` と `payload` を読み取り、`type` が存在しない行はスキップ
 3. `session_meta` の `payload.cwd` でプロジェクト情報を取得
 4. `response_item` で `payload.type: "message"`, `payload.role: "user"` のメッセージを抽出
@@ -380,6 +382,7 @@ Cline と同じ手順。
 
 ### 注意事項
 - セッションはグローバル保存（プロジェクト別ディレクトリではない）
+- `archived_sessions` は Codex アプリでアーカイブしたスレッドの保存先
 - プロジェクト情報は `session_meta` の `payload.cwd` フィールドから取得
 - `state-v5.db` にもスレッドメタデータがあるが、会話内容は rollout JSONL に保存される
 
