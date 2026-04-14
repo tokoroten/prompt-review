@@ -23,7 +23,7 @@ Claude Code のスキルとして動作する、AIエージェント対話履歴
 | Windsurf (Cascade) | テキスト（自動要約メモリ） |
 | Google Antigravity | テキスト（ログファイル） |
 | Gemini CLI | JSON / JSONL（セッションファイル） |
-| OpenAI Codex（CLI） | JSONL（rollout セッションファイル） |
+| OpenAI Codex（CLI / App） | JSONL（rollout セッションファイル） |
 | OpenCode | SQLite（`opencode.db` / `opencode-<channel>.db`） |
 
 ## 使い方
