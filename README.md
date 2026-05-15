@@ -63,15 +63,14 @@ prompt-review/
 ├── README.md
 ├── reports/                              # 生成されたレポート
 │   └── prompt-review-YYYY-MM-DD.md
-└── .claude/
-    └── skills/
-        └── prompt-review/
-            ├── SKILL.md                  # スキル定義（実行手順）
-            ├── scripts/
-            │   └── collect.py            # データ収集スクリプト
-            └── references/
-                ├── data-sources.md       # ログ保存場所・形式の詳細
-                └── report-template.md    # レポート構造テンプレート
+└── skills/
+    └── prompt-review/
+        ├── SKILL.md                  # スキル定義（実行手順）
+        ├── scripts/
+        │   └── collect.py            # データ収集スクリプト
+        └── references/
+            ├── data-sources.md       # ログ保存場所・形式の詳細
+            └── report-template.md    # レポート構造テンプレート
 ```
 
 ## 要件
