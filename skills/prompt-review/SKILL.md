@@ -37,7 +37,11 @@ context: fork
 
 ```bash
 OUTFILE="/tmp/prompt-review-data_$(date +%Y%m%d%H%M%S).json"
-python ~/.claude/skills/prompt-review/scripts/collect.py [OPTIONS] > "$OUTFILE"
+SKILL_DIR=".claude/skills/prompt-review"
+if [ ! -f "$SKILL_DIR/scripts/collect.py" ]; then
+  SKILL_DIR="$HOME/.claude/skills/prompt-review"
+fi
+python "$SKILL_DIR/scripts/collect.py" [OPTIONS] > "$OUTFILE"
 ```
 
 - 引数なし → オプションなし（デフォルト: 過去7日分）
@@ -46,7 +50,7 @@ python ~/.claude/skills/prompt-review/scripts/collect.py [OPTIONS] > "$OUTFILE"
 - 文字列のみ（例: `yonshogen`） → `--project yonshogen`
 - 文字列 + 数値（例: `yonshogen 30`） → `--project yonshogen --days 30`
 
-**重要**: スクリプトのパスは、このスキルファイルからの相対パスではなく、スキルが格納されているプロジェクトの `.claude/skills/prompt-review/scripts/collect.py` の絶対パスを使うこと。現在の作業ディレクトリ（`cwd`）を基準に `.claude/skills/prompt-review/scripts/collect.py` を指定する。
+**重要**: まず現在の作業ディレクトリ（cwd）基準でプロジェクトローカル（`.claude/skills/prompt-review/scripts/collect.py`）を確認し、存在しない場合は `$HOME/.claude/skills/prompt-review/scripts/collect.py` にフォールバックすること。上記の `SKILL_DIR` 変数でパスを解決する。
 
 ### 出力の読み取り
 
